@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="jquery-1.11.3.js"></script>
+    <script src="socket.io.js"></script>
+    <style>
+        #publist{width:600px;height:600px;overflow:auto;background:url(haha.jpg) no-repeat;background-size:cover}
+        #publist{position:relative;}
+        #status{position: absolute;left:0;top:20px;}
+        #list{width:400px;height:300px;overflow:auto;border:3px solid deepskyblue;border-radius: 10px;position: absolute;top:130px;left:120px}
+        #chat{width:300px;position:absolute;right:0;top:20px;}
+        #chat input{display:inline-block;height:30px;outline: none;float: left;}
+        #chat button{display:inline-block;height:35px;outline: none;float: left;}
+
+    </style>
+</head>
+<body>
+<div id="big">
+    <div id="login">
+        <label for="">请输入昵称</label>
+        <input type="text">
+        <button>登录聊天</button>
+    </div>
+    <div id="publist" style="display: none">
+        <div id="status">
+           <strong>当前在线人数:</strong> <span></span>
+           <strong>当前用户列表：</strong>
+            <ul></ul>
+        </div>
+        <div id="list">
+
+        </div>
+        <div id="chat">
+            <input type="text"  autocomplete="off">
+            <button>发送消息</button>
+        </div>
+    </div>
+</div>
+    <script>
+        var socket = io.connect('http://localhost:3000');
+        $(document).ready(function () {
+            $('#login button').click(function () {
+                var username = $('#login input').val();
+                if(username.trim()==null){
+                    alert('请输入昵称！');
+                    return
+                };
+                $('#login').hide();
+                $('#publist').show();
+                var myname = username
+                socket.emit('login',username);
+                $('#chat button').click(function () {
+                    var content = $('#chat input').val();
+                    socket.emit('chat',content)
+                })
+                socket.on('come',(data)=>{
+                    if(data.user==myname){
+                    data.user="我"
+                }
+                    $('#list').append($("<p>"+data.user+"------说"+data.msg+"</p>"));
+                    $('#chat').scrollTo(0,999999);
+                });
+                socket.on('hy',(data)=>{
+                    $('#list').append($("<p>"+data+"---加入聊天，欢迎欢迎！</p>"));
+                })
+                socket.on('status',(data)=>{
+                    $('#status span').text(data.cont);
+                    $('#status ul').empty();
+                    $.each(data.users,(index,item)=>{
+                    $('#status ul').append($("<li>"+item+"</li>"));
+                })
+                })
+                socket.on('leave',(data)=>{
+                    $('#list').append($("<p>"+data+"---离开了，表示哀悼！</p>"));
+                })
+
+            })
+
+
+
+
+        })
+    </script>
+</body>
+</html>
